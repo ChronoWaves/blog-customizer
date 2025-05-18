@@ -3,6 +3,7 @@ import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 import { Select } from 'src/ui/select';
 import { RadioGroup } from 'src/ui/radio-group';
+import { Text } from 'src/ui/text';
 
 import {
 	fontFamilyOptions,
@@ -32,25 +33,26 @@ export const ArticleParamsForm = ({
 	onApply,
 	onReset,
 }: ArticleParamsFormProps) => {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const asideRef = useRef<HTMLElement | null>(null);
 
-	const handleClickOutside = (event: MouseEvent) => {
-		if (asideRef.current && !asideRef.current.contains(event.target as Node)) {
-			setIsOpen(false);
-		}
-	};
-
 	useEffect(() => {
-		if (isOpen) {
-			document.addEventListener('mousedown', handleClickOutside);
-		} else {
-			document.removeEventListener('mousedown', handleClickOutside);
-		}
+		if (!isMenuOpen) return;
+
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				asideRef.current &&
+				!asideRef.current.contains(event.target as Node)
+			) {
+				setIsMenuOpen(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
-	}, [isOpen]);
+	}, [isMenuOpen]);
 
 	const handleChange = (key: keyof typeof formSettings, value: OptionType) => {
 		setFormSettings((prev) => ({ ...prev, [key]: value }));
@@ -58,64 +60,71 @@ export const ArticleParamsForm = ({
 
 	return (
 		<>
-			<ArrowButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
-			{isOpen && (
-				<aside
-					className={clsx(styles.container, styles.container_open)}
-					ref={asideRef}>
-					<form
-						className={styles.form}
-						onSubmit={(e) => {
-							e.preventDefault();
-							onApply();
-							setIsOpen(false);
-						}}>
-						<Select
-							title='Шрифт'
-							options={fontFamilyOptions}
-							selected={formSettings.fontFamilyOption}
-							onChange={(value) => handleChange('fontFamilyOption', value)}
+			<ArrowButton
+				isOpen={isMenuOpen}
+				onClick={() => setIsMenuOpen(!isMenuOpen)}
+			/>
+			<aside
+				className={clsx(styles.container, {
+					[styles.container_open]: isMenuOpen,
+				})}
+				ref={asideRef}>
+				<form
+					className={styles.form}
+					onSubmit={(e) => {
+						e.preventDefault();
+						onApply();
+						setIsMenuOpen(false);
+					}}>
+					<Text as='h2' size={31} weight={800} uppercase>
+						{'Задайте параметры'}
+					</Text>
+
+					<Select
+						title='Шрифт'
+						options={fontFamilyOptions}
+						selected={formSettings.fontFamilyOption}
+						onChange={(value) => handleChange('fontFamilyOption', value)}
+					/>
+					<RadioGroup
+						title='Размер шрифта'
+						name='fontSize'
+						options={fontSizeOptions}
+						selected={formSettings.fontSizeOption}
+						onChange={(value) => handleChange('fontSizeOption', value)}
+					/>
+					<Select
+						title='Цвет шрифта'
+						options={fontColors}
+						selected={formSettings.fontColor}
+						onChange={(value) => handleChange('fontColor', value)}
+					/>
+					<Select
+						title='Цвет фона'
+						options={backgroundColors}
+						selected={formSettings.backgroundColor}
+						onChange={(value) => handleChange('backgroundColor', value)}
+					/>
+					<Select
+						title='Ширина контента'
+						options={contentWidthArr}
+						selected={formSettings.contentWidth}
+						onChange={(value) => handleChange('contentWidth', value)}
+					/>
+					<div className={styles.bottomContainer}>
+						<Button
+							title='Сбросить'
+							htmlType='reset'
+							type='clear'
+							onClick={() => {
+								onReset();
+								setIsMenuOpen(false);
+							}}
 						/>
-						<RadioGroup
-							title='Размер шрифта'
-							name='fontSize'
-							options={fontSizeOptions}
-							selected={formSettings.fontSizeOption}
-							onChange={(value) => handleChange('fontSizeOption', value)}
-						/>
-						<Select
-							title='Цвет шрифта'
-							options={fontColors}
-							selected={formSettings.fontColor}
-							onChange={(value) => handleChange('fontColor', value)}
-						/>
-						<Select
-							title='Цвет фона'
-							options={backgroundColors}
-							selected={formSettings.backgroundColor}
-							onChange={(value) => handleChange('backgroundColor', value)}
-						/>
-						<Select
-							title='Ширина контента'
-							options={contentWidthArr}
-							selected={formSettings.contentWidth}
-							onChange={(value) => handleChange('contentWidth', value)}
-						/>
-						<div className={styles.bottomContainer}>
-							<Button
-								title='Сбросить'
-								htmlType='reset'
-								type='clear'
-								onClick={() => {
-									onReset();
-									setIsOpen(false);
-								}}
-							/>
-							<Button title='Применить' htmlType='submit' type='apply' />
-						</div>
-					</form>
-				</aside>
-			)}
+						<Button title='Применить' htmlType='submit' type='apply' />
+					</div>
+				</form>
+			</aside>
 		</>
 	);
 };
